@@ -44,7 +44,7 @@ export default defineConfig((/* ctx */) => {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: '/HRIS-quasar',
+      publicPath: '/HRIS',
       // analyze: true,
       // env: {},
       // rawDefine: {}
