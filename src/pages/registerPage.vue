@@ -1,3 +1,15 @@
+<!--
+  員工帳號建立頁面 (Register Page)
+
+  由 admin 操作，在系統中建立新員工帳號。
+  這不是「使用者自助註冊」，而是「管理者新增員工帳號」的功能。
+  （路由設有 admin: true meta，非 admin 無法進入此頁面）
+
+  功能：
+  - 帳號、密碼、確認密碼的前端驗證
+  - 確認密碼欄位確保兩次輸入一致
+  - 成功後回到登入頁（實際的員工資料由 admin 在人員管理頁填寫）
+-->
 <template>
   <q-page padding>
     <div class="row justify-center">
@@ -6,7 +18,9 @@
 
         <q-separator class="q-mb-md" />
 
+        <!-- q-form 搭配 vee-validate，驗證通過後才執行 submit -->
         <q-form @submit="submit" class="q-gutter-y-md">
+          <!-- 帳號輸入框（disabled 在提交中防止修改） -->
           <q-input
             v-model="account.value.value"
             :error="!!account.errorMessage.value"
@@ -19,6 +33,7 @@
             :disable="form.isSubmitting.value"
           />
 
+          <!-- 密碼輸入框 -->
           <q-input
             v-model="password.value.value"
             :error="!!password.errorMessage.value"
@@ -32,6 +47,7 @@
             :disable="form.isSubmitting.value"
           />
 
+          <!-- 確認密碼輸入框：透過 yup 的 .oneOf([yup.ref('password')]) 確保與密碼一致 -->
           <q-input
             v-model="confirmPassword.value.value"
             :error="!!confirmPassword.errorMessage.value"
@@ -46,6 +62,7 @@
           />
 
           <div class="row justify-center q-gutter-md">
+            <!-- 取消：回到首頁（登入頁） -->
             <q-btn type="button" flat label="取消" color="primary" @click="router.push('/')" />
             <q-btn
               type="submit"
@@ -69,11 +86,15 @@ import { useRouter } from 'vue-router'
 import * as yup from 'yup'
 import serviceUser from 'src/services/user'
 
-// Quasar 的工具
 const $q = useQuasar()
 const router = useRouter()
 
-// 驗證規則 Schema (邏輯保持不變)
+/**
+ * 表單驗證 Schema（yup）
+ * 帳號、密碼規則與登入頁相同，確保後端一定能通過驗證。
+ * 確認密碼額外加上 .oneOf([yup.ref('password')]) 確保兩個密碼欄位一致，
+ * 避免管理者輸入錯誤導致員工無法登入。
+ */
 const schema = yup.object({
   account: yup
     .string()
@@ -99,10 +120,14 @@ const schema = yup.object({
     .test('isAscii', '密碼只能是英、數字、特殊符號', (value) =>
       value ? validator.isAscii(value) : true,
     )
+    // 確保確認密碼與密碼欄位相同
     .oneOf([yup.ref('password')], '密碼不一致'),
 })
 
-// 建立表單
+/**
+ * vee-validate 表單設定
+ * 以物件形式保存 form，讓 template 可以存取 isSubmitting 等狀態
+ */
 const form = useForm({
   validationSchema: schema,
   initialValues: {
@@ -112,11 +137,16 @@ const form = useForm({
   },
 })
 
-// 建立表單欄位
+// 建立各表單欄位（以物件形式保存，template 透過 account.value.value 存取）
 const account = useField('account')
 const password = useField('password')
 const confirmPassword = useField('confirmPassword')
 
+/**
+ * 表單送出處理
+ * 呼叫後端新增帳號 API（只需帳號密碼，其他員工資料在人員管理頁補填）
+ * 成功後回到登入頁，失敗顯示錯誤通知
+ */
 const submit = form.handleSubmit(async (values) => {
   try {
     console.log('success')
@@ -129,9 +159,11 @@ const submit = form.handleSubmit(async (values) => {
       position: 'bottom',
     })
 
+    // 建立成功後回到登入頁（不自動登入，讓員工自行登入）
     router.push('/')
   } catch (error) {
     console.log(error)
+    // 後端錯誤訊息（如「帳號重複」）優先顯示
     const text = error?.response?.data?.message || '發生錯誤'
 
     $q.notify({
