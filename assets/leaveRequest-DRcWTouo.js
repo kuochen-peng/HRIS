@@ -1,0 +1,1 @@
+import{c as r,h as u,al as t}from"./index-Dw2_tmQz.js";const p=r({name:"QSpace",setup(){const e=u("div",{class:"q-space"});return()=>e}}),n={create:e=>t.post("/leaveRequest",e),getAllLeaveRequest:()=>t.get("/leaveRequest/all"),getMyLeaveRequest:()=>t.get("/leaveRequest/my"),updateStatus:(e,a,s)=>t.patch(`/leaveRequest/${e}`,{status:a,comment:s})};export{p as Q,n as s};
